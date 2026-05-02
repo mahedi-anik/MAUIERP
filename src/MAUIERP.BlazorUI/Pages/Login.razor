@@ -1,0 +1,142 @@
+﻿@page "/login"
+@layout EmptyLayout
+@using MAUIERP.ApplicationLayer.Features.Auth.Commands
+@using MAUIERP.BlazorUI.Services
+@using MediatR
+@using MudBlazor
+
+@inject IMediator Mediator
+@inject CustomAuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="login-page">
+    <MudContainer MaxWidth="MaxWidth.ExtraSmall">
+        <MudPaper Class="login-card" Elevation="0" Outlined="true">
+            
+            <div class="text-center mb-10">
+                <MudIcon Icon="@Icons.Material.Filled.Shield" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.h4" Class="mt-4 font-weight-bold">MAUI ERP</MudText>
+                <MudText Typo="Typo.body1" Class="text-muted">Sign in to continue</MudText>
+            </div>
+
+            <MudTextField @bind-Value="_username"
+                          Label="Username or Email"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Person"
+                          Immediate="true"
+                          Class="mb-6" />
+
+            <MudTextField @bind-Value="_password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="@_passwordType"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Lock"
+                          Immediate="true"
+                          Class="mb-8" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Large"
+                       FullWidth="true"
+                       OnClick="@HandleLogin"
+                       Disabled="@_isLoading"
+                       Class="login-btn">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                   
+                }
+                else
+                {
+                    <span>Sign In</span>
+                }
+            </MudButton>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-5" Dense="true" Variant="Variant.Outlined">
+                    @_errorMessage
+                </MudAlert>
+            }
+
+        </MudPaper>
+    </MudContainer>
+</div>
+
+<style>
+    .login-page {
+        min-height: 100vh;
+        background: linear-gradient(145deg, #f8fafc 0%, #e0e7ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        padding: 48px 40px;
+        border-radius: 20px;
+        max-width: 380px;
+        width: 100%;
+        background: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .login-btn {
+        height: 54px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.05rem;
+        text-transform: none;
+    }
+</style>
+
+@code {
+    private string _username = "admin";
+    private string _password = "Admin@123";
+    private bool _isLoading = false;
+    private string _errorMessage = string.Empty;
+    private InputType _passwordType = InputType.Password;
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_password))
+        {
+            _errorMessage = "Please enter username and password";
+            return;
+        }
+
+        _isLoading = true;
+        _errorMessage = "";
+
+        try
+        {
+            var command = new LoginCommand(_username, _password);
+            var result = await Mediator.Send(command);
+
+            if (result.Succeeded && result.Data != null)
+            {
+                await AuthProvider.MarkUserAsAuthenticated(result.Data.AccessToken);
+                Navigation.NavigateTo("/dashboard", true);
+            }
+            else
+            {
+                _errorMessage = "Invalid username or password";
+            }
+        }
+        catch
+        {
+            _errorMessage = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

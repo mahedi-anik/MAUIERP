@@ -1,0 +1,232 @@
+﻿@page "/dashboard"
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-10 mb-10 fade-in">
+    <!-- Header Section -->
+    <div class="d-flex align-end justify-space-between mb-8">
+        <div>
+            <MudText Typo="Typo.h3" Class="font-weight-bold dashboard-title">Console</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Welcome back. Here is what's happening today.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" Style="border-radius: 12px; height: 48px;">
+            New Report
+        </MudButton>
+    </div>
+
+    <MudGrid Spacing="4">
+        <!-- Modernized Stat Cards -->
+        @foreach (var stat in GetStatsConfigs())
+        {
+            // FIX: Capturing the loop variable prevents IndexOutOfRangeException
+            var currentStat = stat; 
+
+            <MudItem xs="12" sm="6" md="3">
+                <div class="glass-card stat-item-wrapper" @onclick='() => NavigateTo(currentStat.Path)'>
+                    <div class="d-flex align-center">
+                        <div class="icon-box" style="background: @currentStat.BgColor">
+                            <MudIcon Icon="@currentStat.Icon" Style="@($"color: {currentStat.HexColor};")" />
+                        </div>
+                        <div class="ml-4">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary uppercase-tracking">@currentStat.Label</MudText>
+                            <MudText Typo="Typo.h5" Class="font-weight-bold">@currentStat.Value</MudText>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex align-center">
+                        <span class="trend-badge @(currentStat.Trend >= 0 ? "up" : "down")">
+                            <MudIcon Icon="@(currentStat.Trend >= 0 ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)" Size="Size.Small" />
+                            @Math.Abs(currentStat.Trend)%
+                        </span>
+                        <MudText Typo="Typo.caption" Class="ml-2 mud-text-secondary">since last week</MudText>
+                    </div>
+                </div>
+            </MudItem>
+        }
+
+        <!-- Main Analytics Chart -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Elevation="0" Class="glass-card pa-6">
+                <div class="d-flex justify-space-between align-center mb-8">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">Performance Analytics</MudText>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Style="border-radius: 8px;">
+                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(7))">7D</MudButton>
+                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(30))">30D</MudButton>
+                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(90))">90D</MudButton>
+                    </MudButtonGroup>
+                </div>
+                <MudChart ChartType="ChartType.Line" ChartSeries="@_series" XAxisLabels="@_revenueLabels" 
+                          Width="100%" Height="320px" ChartOptions="_lineOptions" />
+            </MudPaper>
+        </MudItem>
+
+        <!-- Distribution Donut -->
+        <MudItem xs="12" lg="4">
+            <MudPaper Elevation="0" Class="glass-card pa-6">
+                <MudText Typo="Typo.h6" Class="font-weight-bold mb-8">Infrastructure</MudText>
+                <MudChart ChartType="ChartType.Donut" InputData="@_serverDistribution" 
+                          InputLabels="@_serverDistributionLabels" Width="100%" Height="280px" />
+                <div class="mt-4">
+                    @for (int i = 0; i < _serverDistributionLabels.Length; i++)
+                    {
+                        var index = i; // Fix for potential index issues in loops
+                        <div class="d-flex justify-space-between mb-1">
+                            <MudText Typo="Typo.caption">@_serverDistributionLabels[index]</MudText>
+                            <MudText Typo="Typo.caption" Class="font-weight-bold">@_serverDistribution[index]%</MudText>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Transactions Table -->
+        <MudItem xs="12">
+            <MudPaper Elevation="0" Class="glass-card pa-4">
+                <MudTable Items="@_recentTransactions" Hover="true" Elevation="0" Class="modern-table">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6" Class="font-weight-bold">Financial History</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="_searchString" Placeholder="Search..." Adornment="Adornment.Start" 
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Margin="Margin.Dense" Variant="Variant.Outlined" />
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>Entity</MudTh>
+                        <MudTh>Value</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <div class="d-flex align-center">
+                                <MudAvatar Color="Color.Transparent" Style="border: 1px solid #eee" Size="Size.Small" Class="mr-3">@context.Customer[0]</MudAvatar>
+                                <MudText Typo="Typo.body2" Class="font-weight-bold">@context.Customer</MudText>
+                            </div>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2" Class="font-weight-bold">@context.Amount.ToString("C0")</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <div class="status-pill @context.Status.ToLower()">@context.Status</div>
+                        </MudTd>
+                        <MudTd>@context.Date.ToString("MMM dd, yyyy")</MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    :root {
+        --bg-color: #f8fafc;
+        --card-bg: rgba(255, 255, 255, 0.9);
+    }
+    body { background-color: var(--bg-color); }
+    .dashboard-title { letter-spacing: -1px; color: #1e293b; }
+    .glass-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+    .stat-item-wrapper { padding: 24px; cursor: pointer; transition: all 0.3s ease; }
+    .stat-item-wrapper:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+    .icon-box { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .uppercase-tracking { text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-size: 0.65rem; }
+    .trend-badge { display: flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .trend-badge.up { background: #dcfce7; color: #166534; }
+    .trend-badge.down { background: #fee2e2; color: #991b1b; }
+    .status-pill { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+    .status-pill.completed { background: #e0f2fe; color: #0369a1; }
+    .status-pill.pending { background: #fef3c7; color: #92400e; }
+    .fade-in { animation: fadeIn 0.6s ease-in; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    
+    private ServerStats _serverStats = new();
+    private BillingStats _billingStats = new();
+    private UserStats _userStats = new();
+    private SecurityStats _securityStats = new();
+    private string _searchString = "";
+    
+    private List<ChartSeries> _series = new();
+    private string[] _revenueLabels = Array.Empty<string>();
+    private ChartOptions _lineOptions = new() { InterpolationOption = InterpolationOption.NaturalSpline };
+    private double[] _serverDistribution = { 40, 30, 20, 10 };
+    private string[] _serverDistributionLabels = { "Web", "DB", "Storage", "Edge" };
+    
+    private List<Transaction> _recentTransactions = new();
+    private bool _autoRefresh = true;
+    private System.Timers.Timer? _refreshTimer;
+
+    private List<StatConfigModern> GetStatsConfigs() => new()
+    {
+        new("Inventory", _serverStats.Total.ToString(), 14, Icons.Material.Filled.Storage, "#eef2ff", "#6366f1", "/servers"),
+        new("Revenue", $"${_billingStats.Revenue:N0}", 8, Icons.Material.Filled.AutoGraph, "#ecfdf5", "#10b981", "/billing"),
+        new("Active", _userStats.Active.ToString(), -3, Icons.Material.Filled.ElectricBolt, "#fff7ed", "#f59e0b", "/users"),
+        new("Safety", $"{_securityStats.Score}%", 2, Icons.Material.Filled.VerifiedUser, "#fef2f2", "#ef4444", "/security")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+        LoadCharts();
+        LoadTransactions();
+        StartAutoRefresh();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        await Task.Delay(50);
+        _serverStats = new ServerStats { Total = 42 };
+        _billingStats = new BillingStats { Revenue = 124500 };
+        _userStats = new UserStats { Active = 2100 };
+        _securityStats = new SecurityStats { Score = 98 };
+    }
+
+    private void LoadCharts()
+    {
+        _revenueLabels = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul" };
+        _series = new List<ChartSeries> { new ChartSeries { Name = "Revenue", Data = new double[] { 65, 59, 80, 81, 56, 55, 40 } } };
+    }
+
+    private void LoadTransactions() => _recentTransactions = new List<Transaction>
+    {
+        new() { Customer = "Stripe Inc", Amount = 4500, Status = "Completed", Date = DateTime.Now.AddDays(-1) },
+        new() { Customer = "Vercel", Amount = 1200, Status = "Pending", Date = DateTime.Now.AddDays(-2) },
+        new() { Customer = "GitHub", Amount = 800, Status = "Completed", Date = DateTime.Now.AddDays(-3) }
+    };
+
+    private void StartAutoRefresh()
+    {
+        _refreshTimer = new System.Timers.Timer(30000);
+        _refreshTimer.Elapsed += async (s, e) => { if (_autoRefresh) await InvokeAsync(StateHasChanged); };
+        _refreshTimer.Start();
+    }
+
+    private void OnRevenuePeriodChanged(int p) { LoadCharts(); StateHasChanged(); }
+    private void NavigateTo(string p) => Navigation.NavigateTo(p);
+
+    public void Dispose()
+    {
+        _refreshTimer?.Stop();
+        _refreshTimer?.Dispose();
+    }
+
+    public record StatConfigModern(string Label, string Value, double Trend, string Icon, string BgColor, string HexColor, string Path);
+    private class ServerStats { public int Total { get; set; } }
+    private class BillingStats { public double Revenue { get; set; } }
+    private class UserStats { public int Active { get; set; } }
+    private class SecurityStats { public int Score { get; set; } }
+    private class Transaction { public string Customer { get; set; } = ""; public double Amount { get; set; } public string Status { get; set; } = ""; public DateTime Date { get; set; } }
+}

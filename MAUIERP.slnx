@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MAUIERP.ApplicationLayer/MAUIERP.ApplicationLayer.csproj" />
+    <Project Path="src/MAUIERP.BlazorUI/MAUIERP.BlazorUI.csproj">
+      <Deploy Solution="Debug|*" />
+    </Project>
+    <Project Path="src/MAUIERP.Domain/MAUIERP.Domain.csproj" />
+    <Project Path="src/MAUIERP.Infrastructure/MAUIERP.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MAUIERP.IntegrationTests/MAUIERP.IntegrationTests.csproj" />
+    <Project Path="tests/MAUIERP.UnitTests/MAUIERP.UnitTests.csproj" />
+  </Folder>
+</Solution>

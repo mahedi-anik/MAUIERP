@@ -1,0 +1,32 @@
+@using MAUIERP.BlazorUI.Pages
+@using MAUIERP.BlazorUI.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Routing
+@inject NavigationManager Navigation
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Main).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @{
+                        Navigation.NavigateTo("/login", true);
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex justify-center align-center" Style="min-height: 100vh;">
+                <MudPaper Elevation="3" Class="pa-8 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Color="Color.Error" />
+                    <MudText Typo="Typo.h4" Class="mt-4">404 - Page Not Found</MudText>
+                    <MudText Typo="Typo.body1" Class="mt-2">The page you are looking for does not exist.</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" Href="/login">
+                        Go to Login
+                    </MudButton>
+                </MudPaper>
+            </MudContainer>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
