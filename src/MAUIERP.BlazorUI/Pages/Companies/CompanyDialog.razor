@@ -1,0 +1,281 @@
+﻿@using FluentValidation
+@using MAUIERP.ApplicationLayer.DTOs.MasterData
+@using MAUIERP.ApplicationLayer.Features.Companies.Commands
+@using MAUIERP.Domain.Enums
+@using MediatR
+@using MudBlazor
+@using MudBlazorSeverity = MudBlazor.Severity
+@inject IMediator Mediator
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(!IsEdit ? "Add Company" : "Edit Company")</MudText>
+    </TitleContent>
+    
+    <DialogContent>
+        <MudCard>
+            <MudForm Model="@_model" @ref="@_form" Validation="@(_companyValidator.ValidateValue)" ValidationDelay="0">
+                <MudCardContent>
+                    <!-- Basic Information -->
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Name"
+                                          For="@(() => _model.Name)"
+                                          Immediate="true"
+                                          Label="Name" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Code"
+                                          For="@(() => _model.Code)"
+                                          Immediate="true"
+                                          Label="Code" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Email"
+                                          For="@(() => _model.Email)"
+                                          Immediate="true"
+                                          Label="Email" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Phone"
+                                          For="@(() => _model.Phone)"
+                                          Immediate="true"
+                                          Label="Phone" />
+                        </MudItem>
+                        
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_model.Address"
+                                          For="@(() => _model.Address)"
+                                          Immediate="true"
+                                          Label="Address" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.City"
+                                          For="@(() => _model.City)"
+                                          Immediate="true"
+                                          Label="City" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.State"
+                                          For="@(() => _model.State)"
+                                          Immediate="true"
+                                          Label="State/Province" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.Country"
+                                          For="@(() => _model.Country)"
+                                          Immediate="true"
+                                          Label="Country" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.PostalCode"
+                                          For="@(() => _model.PostalCode)"
+                                          Immediate="true"
+                                          Label="Postal Code" />
+                        </MudItem>
+                        
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.TaxNumber"
+                                          For="@(() => _model.TaxNumber)"
+                                          Immediate="true"
+                                          Label="Tax Number" />
+                        </MudItem>
+                        
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_model.Website"
+                                          For="@(() => _model.Website)"
+                                          Immediate="true"
+                                          Label="Website" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudForm>
+        </MudCard>
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@_isSaving">
+            @if (_isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            <span>Save</span>
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+    [Parameter] public CompanyDto? Company { get; set; }
+    [Parameter] public bool IsEdit { get; set; }
+    
+    private MudForm? _form;
+    private CreateCompanyDto _model = new();
+    private bool _isSaving;
+    private CompanyValidator _companyValidator = new();
+    
+    protected override void OnInitialized()
+    {
+        if (IsEdit && Company != null)
+        {
+            _model = new CreateCompanyDto
+            {
+                Name = Company.Name,
+                Code = Company.Code,
+                TaxNumber = Company.TaxNumber,
+                Phone = Company.Phone,
+                Email = Company.Email,
+                Website = Company.Website,
+                Address = Company.Address,
+                City = Company.City,
+                State = Company.State,
+                Country = Company.Country,
+                PostalCode = Company.PostalCode
+            };
+        }
+    }
+    
+    public class CompanyValidator : AbstractValidator<CreateCompanyDto>
+    {
+        public CompanyValidator()
+        {
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Name is required")
+                .MaximumLength(200);
+                
+            RuleFor(x => x.Code)
+                .NotEmpty().WithMessage("Code is required")
+                .MaximumLength(50);
+                
+            RuleFor(x => x.Email)
+                .NotEmpty().WithMessage("Email is required")
+                .EmailAddress().When(x => !string.IsNullOrEmpty(x.Email))
+                .MaximumLength(100);
+                
+            RuleFor(x => x.Phone)
+                .MaximumLength(11);
+                
+            RuleFor(x => x.Address)
+                .MaximumLength(500);
+                
+            RuleFor(x => x.City)
+                .MaximumLength(100);
+                
+            RuleFor(x => x.State)
+                .MaximumLength(100);
+                
+            RuleFor(x => x.Country)
+                .MaximumLength(100);
+                
+            RuleFor(x => x.PostalCode)
+                .MaximumLength(20);
+                
+            RuleFor(x => x.TaxNumber)
+                .MaximumLength(50);
+                
+            RuleFor(x => x.Website)
+                .MaximumLength(200);
+        }
+        
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<CreateCompanyDto>.CreateWithOptions((CreateCompanyDto)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+    
+    private async Task Save()
+    {
+        if (_form != null)
+        {
+            await _form.Validate();
+            
+            if (!_form.IsValid)
+            {
+                Snackbar.Add("Please fix the validation errors", MudBlazorSeverity.Warning);
+                return;
+            }
+        }
+        
+        _isSaving = true;
+        
+        try
+        {
+            if (!IsEdit)
+            {
+                var command = new CreateCompanyCommand(_model);
+                var result = await Mediator.Send(command);
+                
+                if (result.Succeeded)
+                {
+                    Snackbar.Add("Company created successfully", MudBlazorSeverity.Success);
+                    MudDialog!.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var errors = string.Join("\n", result.Errors);
+                    Snackbar.Add($"Failed to create company: {errors}", MudBlazorSeverity.Error);
+                }
+            }
+            else
+            {
+                if (Company == null)
+                {
+                    Snackbar.Add("Company information is missing", MudBlazorSeverity.Error);
+                    return;
+                }
+                
+                var updateDto = new UpdateCompanyDto
+                {
+                    Name = _model.Name,
+                    Code = _model.Code,
+                    TaxNumber = _model.TaxNumber,
+                    Phone = _model.Phone,
+                    Email = _model.Email,
+                    Website = _model.Website,
+                    Address = _model.Address,
+                    City = _model.City,
+                    State = _model.State,
+                    Country = _model.Country,
+                    PostalCode = _model.PostalCode,
+                    Status = Company.Status == "Active" ? CompanyStatus.Active : CompanyStatus.Inactive
+                };
+                
+                var command = new UpdateCompanyCommand(Company.Id, updateDto);
+                var result = await Mediator.Send(command);
+                
+                if (result.Succeeded)
+                {
+                    Snackbar.Add("Company updated successfully", MudBlazorSeverity.Success);
+                    MudDialog!.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var errors = string.Join("\n", result.Errors);
+                    Snackbar.Add($"Failed to update company: {errors}", MudBlazorSeverity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", MudBlazorSeverity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+    
+    private void Cancel() => MudDialog!.Cancel();
+}

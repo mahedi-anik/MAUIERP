@@ -10,244 +10,526 @@
 <MudPopoverProvider />
 
 <MudLayout>
-    <!-- Standard Top Bar -->
-    <MudAppBar Elevation="0" Class="top-bar" Dense="true">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="ToggleDrawer" Size="Size.Small" />
+    <!-- Premium Top Bar -->
+    <MudAppBar Elevation="0" Class="premium-topbar">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       OnClick="ToggleDrawer"
+                       Edge="Edge.Start"
+                       Class="menu-toggle" />
 
-        <div class="logo-section">
-            <MudIcon Icon="@Icons.Material.Filled.Hub" Size="Size.Small" Color="Color.Primary" />
-            <MudText Typo="Typo.body1" Class="font-weight-bold">MAUI ERP</MudText>
+        <div class="brand-section">
+            <div class="brand-icon-small">
+                <MudIcon Icon="@Icons.Material.Filled.Hub" />
+            </div>
+            <MudText Typo="Typo.h6" Class="brand-name">MAUI ERP</MudText>
         </div>
 
         <MudSpacer />
 
+        <!-- Global Search -->
+        <div class="global-search">
+            <MudTextField T="string"
+                          Placeholder="Search anything..."
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Class="search-input" />
+            <div class="search-shortcut">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">⌘K</MudChip>
+            </div>
+        </div>
 
         <MudSpacer />
 
-        <MudIconButton Icon="@Icons.Material.Filled.NotificationsNone" Color="Color.Inherit" Size="Size.Small" />
+        <!-- Action Icons -->
+        <div class="topbar-actions">
+            <MudTooltip Text="Notifications">
+                <MudBadge Content="3" Color="Color.Error" Overlap="true" Dot="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.NotificationsNone"
+                                   Color="Color.Inherit"
+                                   Class="action-icon" />
+                </MudBadge>
+            </MudTooltip>
 
-        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-            <ActivatorContent>
-                <MudAvatar Class="cursor-pointer" Size="Size.Small">
-                    <MudImage Src="https://i.pravatar.cc/32" />
-                </MudAvatar>
-            </ActivatorContent>
-            <ChildContent>
-                <MudMenuItem OnClick="@(() => Navigation.NavigateTo("/profile"))">My Profile</MudMenuItem>
-                <MudMenuItem OnClick="@(() => Navigation.NavigateTo("/settings"))">Settings</MudMenuItem>
-                <MudDivider />
-                <MudMenuItem OnClick="Logout" Class="text-danger">Logout</MudMenuItem>
-            </ChildContent>
-        </MudMenu>
+            <MudTooltip Text="Messages">
+                <MudBadge Content="5" Color="Color.Success" Overlap="true" Dot="true">
+                    <MudIconButton Icon="@Icons.Material.Filled.ChatBubbleOutline"
+                                   Color="Color.Inherit"
+                                   Class="action-icon" />
+                </MudBadge>
+            </MudTooltip>
+
+            <MudTooltip Text="Settings">
+                <MudIconButton Icon="@Icons.Material.Filled.Settings"
+                               Color="Color.Inherit"
+                               Class="action-icon" />
+            </MudTooltip>
+
+            <MudDivider Vertical="true" FlexItem="true" Class="mx-2" Style="height: 32px;" />
+
+            <!-- User Menu -->
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
+                <ActivatorContent>
+                    <div class="user-profile-trigger">
+                        <MudAvatar Size="Size.Medium" Class="user-avatar">
+                            <MudImage Src="https://i.pravatar.cc/48" />
+                        </MudAvatar>
+                        <div class="user-info">
+                            <MudText Typo="Typo.body2" Class="user-name">John Doe</MudText>
+                            <MudText Typo="Typo.caption" Class="user-role">Administrator</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" />
+                    </div>
+                </ActivatorContent>
+                <ChildContent>
+                    <div class="user-menu-header">
+                        <MudAvatar Size="Size.Large">
+                            <MudImage Src="https://i.pravatar.cc/64" />
+                        </MudAvatar>
+                        <div class="ml-3">
+                            <MudText Typo="Typo.body1" Class="font-weight-bold">John Doe</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">john.doe@company.com</MudText>
+                        </div>
+                    </div>
+                    <MudDivider Class="my-2" />
+                    <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick="@(() => Navigation.NavigateTo("/profile"))">
+                        My Profile
+                    </MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Settings" OnClick="@(() => Navigation.NavigateTo("/settings"))">
+                        Settings
+                    </MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.HelpOutline">
+                        Help Center
+                    </MudMenuItem>
+                    <MudDivider Class="my-2" />
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout" Class="logout-item">
+                        Sign Out
+                    </MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        </div>
     </MudAppBar>
 
-    <!-- Sidebar with modern navigation items -->
+    <!-- Modern Sidebar -->
     <MudDrawer @bind-Open="_drawerOpen"
                Variant="DrawerVariant.Persistent"
-               Width="260px"
-               Elevation="1"
-               Class="sidebar"
-               Dense="true">
+               Width="280px"
+               Elevation="0"
+               Class="premium-sidebar">
+        
+        <div class="sidebar-content">
+            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="ToggleDrawer" Color="Color.Inherit" />
+            <MudNavMenu Class="nav-menu">
+                <!-- Dashboard -->
+                <MudNavLink Href="/dashboard"
+                            Icon="@Icons.Material.Filled.Dashboard"
+                            Match="NavLinkMatch.All"
+                            Class="nav-item">
+                    <div class="nav-link-content">
+                        <span>Dashboard</span>
+                    </div>
+                </MudNavLink>
+                
+                <div class="nav-divider"></div>
+                <div class="nav-section-label">MASTER DATA</div>
 
-        <MudNavMenu Dense="true">
-            <!-- Dashboard -->
-            <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-            
-            <MudDivider Class="my-3" />
+                <!-- Company Group -->
+                <MudNavGroup Title="Company"
+                             Icon="@Icons.Material.Filled.Business"
+                             @bind-Expanded="_companyExpanded"
+                             Class="nav-group">
+                    <MudNavLink Href="/companies" Class="nav-subitem">
+                        <div class="nav-link-content">
+                            <span>Companies</span>
+@*                             <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">42</MudChip>
+ *@                        </div>
+                    </MudNavLink>
+                    <MudNavLink Href="/branch" Class="nav-subitem">
+                        <div class="nav-link-content">
+                            <span>Branches</span>
+                        </div>
+                    </MudNavLink>
+                </MudNavGroup>
 
-            <!-- Company Group -->
-            <MudNavGroup Title="Company"
-                         Icon="@Icons.Material.Filled.Dns"
-                         @bind-Expanded="_serversExpanded">
-                <MudNavLink Href="/company">Company</MudNavLink>
-                <MudNavLink Href="/branch">Branch</MudNavLink>
-            </MudNavGroup>
+                <div class="nav-divider"></div>
+                <div class="nav-section-label">OPERATIONS</div>
 
-            <!-- Servers Group -->
-            <MudNavGroup Title="Servers"
-                         Icon="@Icons.Material.Filled.Dns"
-                         @bind-Expanded="_serversExpanded">
-                <MudNavLink Href="/servers/overview">Server Overview</MudNavLink>
-                <MudNavLink Href="/servers/monitoring">Monitoring</MudNavLink>
-                <MudNavLink Href="/servers/logs">Server Logs</MudNavLink>
-            </MudNavGroup>
+                <!-- Servers Group -->
+                <MudNavGroup Title="Infrastructure"
+                             Icon="@Icons.Material.Filled.Dns"
+                             @bind-Expanded="_serversExpanded"
+                             Class="nav-group">
+                    <MudNavLink Href="/servers/overview" Class="nav-subitem">Server Overview</MudNavLink>
+                    <MudNavLink Href="/servers/monitoring" Class="nav-subitem">Monitoring</MudNavLink>
+                    <MudNavLink Href="/servers/logs" Class="nav-subitem">Server Logs</MudNavLink>
+                </MudNavGroup>
 
-            <!-- Billing Group -->
-            <MudNavGroup Title="Billing"
-                         Icon="@Icons.Material.Filled.Receipt"
-                         @bind-Expanded="_billingExpanded">
-                <MudNavLink Href="/billing/invoices">Invoices</MudNavLink>
-                <MudNavLink Href="/billing/payments">Payments</MudNavLink>
-                <MudNavLink Href="/billing/subscriptions">Subscriptions</MudNavLink>
-                <MudNavLink Href="/billing/transactions">Transactions</MudNavLink>
-            </MudNavGroup>
+                <!-- Billing Group -->
+                <MudNavGroup Title="Billing"
+                             Icon="@Icons.Material.Filled.Receipt"
+                             @bind-Expanded="_billingExpanded"
+                             Class="nav-group">
+                    <MudNavLink Href="/billing/invoices" Class="nav-subitem">Invoices</MudNavLink>
+                    <MudNavLink Href="/billing/payments" Class="nav-subitem">Payments</MudNavLink>
+                    <MudNavLink Href="/billing/subscriptions" Class="nav-subitem">Subscriptions</MudNavLink>
+                    <MudNavLink Href="/billing/transactions" Class="nav-subitem">Transactions</MudNavLink>
+                </MudNavGroup>
 
-            <!-- Users Group -->
-            <MudNavGroup Title="Users"
-                         Icon="@Icons.Material.Filled.People"
-                         @bind-Expanded="_usersExpanded">
-                <MudNavLink Href="/users/all">All Users</MudNavLink>
-                <MudNavLink Href="/users/roles">Roles & Permissions</MudNavLink>
-                <MudNavLink Href="/users/activity">User Activity</MudNavLink>
-            </MudNavGroup>
+                <div class="nav-divider"></div>
+                <div class="nav-section-label">SYSTEM</div>
 
-            <!-- Security Group -->
-            <MudNavGroup Title="Security"
-                         Icon="@Icons.Material.Filled.Security"
-                         @bind-Expanded="_securityExpanded">
-                <MudNavLink Href="/security/audit-logs">Audit Logs</MudNavLink>
-                <MudNavLink Href="/security/api-keys">API Keys</MudNavLink>
-                <MudNavLink Href="/security/two-factor">Two-Factor Auth</MudNavLink>
-                <MudNavLink Href="/security/sessions">Active Sessions</MudNavLink>
-            </MudNavGroup>
-            
-            <!-- Reports Group (Optional) -->
-            <MudNavGroup Title="Reports"
-                         Icon="@Icons.Material.Filled.Assessment"
-                         @bind-Expanded="_reportsExpanded">
-                <MudNavLink Href="/reports/sales">Sales Reports</MudNavLink>
-                <MudNavLink Href="/reports/financial">Financial Reports</MudNavLink>
-            </MudNavGroup>
-        </MudNavMenu>
+                <!-- Users Group -->
+                <MudNavGroup Title="Users"
+                             Icon="@Icons.Material.Filled.People"
+                             @bind-Expanded="_usersExpanded"
+                             Class="nav-group">
+                    <MudNavLink Href="/users/all" Class="nav-subitem">All Users</MudNavLink>
+                    <MudNavLink Href="/users/roles" Class="nav-subitem">Roles & Permissions</MudNavLink>
+                    <MudNavLink Href="/users/activity" Class="nav-subitem">User Activity</MudNavLink>
+                </MudNavGroup>
+
+                <!-- Security Group -->
+                <MudNavGroup Title="Security"
+                             Icon="@Icons.Material.Filled.Security"
+                             @bind-Expanded="_securityExpanded"
+                             Class="nav-group">
+                    <MudNavLink Href="/security/audit-logs" Class="nav-subitem">Audit Logs</MudNavLink>
+                    <MudNavLink Href="/security/api-keys" Class="nav-subitem">API Keys</MudNavLink>
+                    <MudNavLink Href="/security/two-factor" Class="nav-subitem">Two-Factor Auth</MudNavLink>
+                    <MudNavLink Href="/security/sessions" Class="nav-subitem">Active Sessions</MudNavLink>
+                </MudNavGroup>
+                
+                <!-- Reports Group -->
+                <MudNavGroup Title="Reports"
+                             Icon="@Icons.Material.Filled.Assessment"
+                             @bind-Expanded="_reportsExpanded"
+                             Class="nav-group">
+                    <MudNavLink Href="/reports/sales" Class="nav-subitem">Sales Reports</MudNavLink>
+                    <MudNavLink Href="/reports/financial" Class="nav-subitem">Financial Reports</MudNavLink>
+                </MudNavGroup>
+            </MudNavMenu>
+        </div>
     </MudDrawer>
 
-    <!-- Main Content -->
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="content-area">
+    <!-- Overlay -->
+    @if (_drawerOpen)
+    {
+        <div class="overlay" @onclick="ToggleDrawer"></div>
+    }
+
+    <!-- Main Content Area -->
+    <MudMainContent Class="main-content">
+        <div class="content-wrapper">
             @Body
-        </MudContainer>
+        </div>
     </MudMainContent>
 </MudLayout>
 
 <style>
-    /* Modern Light Theme - Most Common for ERP */
-    .top-bar {
-        background: white;
-        color: #1e293b;
-        border-bottom: 1px solid #e2e8f0;
-        height: 64px;
-        padding: 0 24px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    :root {
+        --primary-color: #6366f1;
+        --primary-hover: #4f46e5;
+        --sidebar-bg: #0f172a;
+        --sidebar-item-hover: rgba(255, 255, 255, 0.08);
+        --topbar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --border-color: #e2e8f0;
     }
 
-    .logo-section {
+    /* Overlay */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10; /* Make sure it's above other elements */
+    }
+
+    /* Premium TopBar */
+    .premium-topbar {
+        background: var(--topbar-bg);
+        color: #1e293b;
+        border-bottom: 1px solid var(--border-color);
+        height: 72px;
+        padding: 0 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        backdrop-filter: blur(10px);
+    }
+
+    .menu-toggle {
+        margin-right: 16px;
+    }
+
+    .brand-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-right: 32px;
+    }
+
+    .brand-icon-small {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+    }
+
+        .brand-icon-small .mud-icon-root {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+    .brand-name {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: #1e293b;
+    }
+
+    /* Global Search */
+    .global-search {
+        position: relative;
+        width: 400px;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+
+        .search-input .mud-input-root {
+            background: #f1f5f9;
+            border-radius: 12px;
+            font-size: 0.875rem;
+        }
+
+        .search-input .mud-input-outlined-border {
+            border-color: transparent;
+        }
+
+        .search-input:hover .mud-input-outlined-border {
+            border-color: var(--border-color);
+        }
+
+    .search-shortcut {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+        .search-shortcut .mud-chip {
+            background: rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            font-size: 0.7rem;
+            height: 22px;
+        }
+
+    /* TopBar Actions */
+    .topbar-actions {
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-        .logo-section .mud-icon-root {
-            color: #4f46e5;
-        }
-
-    /* Fixed Search Box Styling */
-    .search-wrapper {
-        position: relative;
-        width: 300px;
+    .action-icon {
+        transition: all 0.2s ease;
     }
 
-    .search-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 1;
-        color: #94a3b8;
-        pointer-events: none;
+        .action-icon:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+    /* User Profile Trigger */
+    .user-profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .search-box {
-        width: 100%;
+        .user-profile-trigger:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+    .user-avatar {
+        border: 2px solid var(--border-color);
     }
 
-        .search-box .mud-input-root {
-            padding-left: 36px !important;
-            background: #f1f5f9;
-            border-radius: 8px;
-            font-size: 0.875rem;
-        }
+    .user-info {
+        text-align: left;
+    }
 
-        .search-box .mud-input-outlined-border {
-            border-color: #e2e8f0;
-        }
+    .user-name {
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.2;
+    }
 
-        .search-box .mud-input-root:hover .mud-input-outlined-border {
-            border-color: #cbd5e1;
-        }
+    .user-role {
+        color: #64748b;
+        line-height: 1.2;
+    }
 
-        .search-box .mud-input-root:focus-within .mud-input-outlined-border {
-            border-color: #4f46e5;
-            border-width: 2px;
-        }
+    /* User Menu */
+    .user-menu-header {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+    }
 
-    /* Modern Sidebar - Dark Theme */
-    .sidebar {
-        background: #1e293b;
+    .logout-item {
+        color: #ef4444;
+    }
+
+    /* Premium Sidebar */
+    .premium-sidebar {
+        background: var(--sidebar-bg);
         color: #cbd5e1;
-        border-right: none;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
     }
 
-        .sidebar .mud-nav-link {
-            color: #cbd5e1;
-            margin: 4px 8px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
+    .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 0;
+    }
 
-            .sidebar .mud-nav-link:hover {
-                background: rgba(255,255,255,0.08);
-                color: white;
-            }
+    /* Navigation Menu */
+    .nav-menu {
+        padding: 0;
+    }
 
-            .sidebar .mud-nav-link.active {
-                background: #4f46e5;
-                color: white;
-            }
+    .nav-section-label {
+        color: #64748b;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 20px 24px 8px 24px;
+    }
 
-                .sidebar .mud-nav-link.active .mud-nav-link-icon {
-                    color: white;
-                }
+    .nav-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.05);
+        margin: 16px 24px;
+    }
 
-        .sidebar .mud-nav-group .mud-nav-group-title {
-            color: #94a3b8;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 12px 16px 4px 16px;
-        }
+    .nav-item, .nav-group {
+        margin: 4px 16px;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
 
-        .sidebar .mud-nav-group .mud-nav-link {
-            padding-left: 52px;
-        }
+    .nav-item {
+        color: #cbd5e1;
+        padding: 12px 16px;
+    }
 
-        .sidebar .mud-icon-root {
-            color: #94a3b8;
-        }
-
-        .sidebar .mud-nav-link:hover .mud-icon-root {
+        .nav-item:hover {
+            background: var(--sidebar-item-hover);
             color: white;
         }
 
-    /* Fix for dropdown menu positioning */
-    .mud-popover {
-        z-index: 9999;
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+    .nav-link-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
     }
 
-    .content-area {
-        background: #f8fafc;
-        padding: 24px;
-        min-height: 100vh;
+    .nav-group .mud-nav-group-header {
+        padding: 12px 16px;
+        border-radius: 12px;
+        color: #cbd5e1;
+    }
+
+    .nav-group:hover .mud-nav-group-header {
+        background: var(--sidebar-item-hover);
+        color: white;
+    }
+
+    .nav-subitem {
+        color: #94a3b8;
+        padding: 8px 16px 8px 48px;
+        margin: 2px 0;
+        border-radius: 8px;
+        font-size: 0.875rem;
+    }
+
+        .nav-subitem:hover {
+            background: var(--sidebar-item-hover);
+            color: white;
+        }
+
+        .nav-subitem.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+    /* Main Content */
+    .main-content {
+        background: var(--content-bg);
+    }
+
+    .content-wrapper {
+        padding: 32px;
+        min-height: calc(100vh - 72px);
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 960px) {
+        .global-search {
+            width: 200px;
+        }
+
+        .user-info {
+            display: none;
+        }
+
+        .brand-name {
+            font-size: 1rem;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .global-search {
+            display: none;
+        }
+
+        .content-wrapper {
+            padding: 16px;
+        }
     }
 </style>
 
 @code {
     private bool _drawerOpen = true;
-    
+
     // Track expanded states for each nav group
-    private bool _serversExpanded = true;
+    private bool _companyExpanded = false;
+    private bool _serversExpanded = false;
     private bool _billingExpanded = false;
-    private bool _usersExpanded = true;
+    private bool _usersExpanded = false;
     private bool _securityExpanded = false;
     private bool _reportsExpanded = false;
 

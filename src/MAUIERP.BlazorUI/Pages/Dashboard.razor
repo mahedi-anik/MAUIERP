@@ -5,149 +5,669 @@
 @attribute [Authorize]
 @implements IDisposable
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-10 mb-10 fade-in">
-    <!-- Header Section -->
-    <div class="d-flex align-end justify-space-between mb-8">
-        <div>
-            <MudText Typo="Typo.h3" Class="font-weight-bold dashboard-title">Console</MudText>
-            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Welcome back. Here is what's happening today.</MudText>
+<div class="dashboard-container fade-in">
+    
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div>
+                <MudText Typo="Typo.h3" Class="page-title">Dashboard</MudText>
+                <MudBreadcrumbs Items="_breadcrumbs" Class="mt-2">
+                    <ItemTemplate Context="item">
+                        <MudLink Href="@item.Href" Class="breadcrumb-link">@item.Text</MudLink>
+                    </ItemTemplate>
+                    <SeparatorTemplate>
+                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" />
+                    </SeparatorTemplate>
+                </MudBreadcrumbs>
+            </div>
+            <div class="header-actions">
+                <MudButton Variant="Variant.Outlined" 
+                           StartIcon="@Icons.Material.Filled.FileDownload"
+                           Class="action-btn mr-3">
+                    Export
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add"
+                           Class="action-btn-primary">
+                    New Report
+                </MudButton>
+            </div>
         </div>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Large" Style="border-radius: 12px; height: 48px;">
-            New Report
-        </MudButton>
     </div>
 
-    <MudGrid Spacing="4">
-        <!-- Modernized Stat Cards -->
+    <!-- Stats Cards Grid -->
+    <MudGrid Spacing="4" Class="mb-6">
         @foreach (var stat in GetStatsConfigs())
         {
-            // FIX: Capturing the loop variable prevents IndexOutOfRangeException
-            var currentStat = stat; 
+            var currentStat = stat;
+            
+            <MudItem xs="12" sm="6" md="6" lg="3">
+                <MudPaper Elevation="0" Class="stat-card" @onclick='() => NavigateTo(currentStat.Path)'>
+                    <div class="stat-card-inner">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: @currentStat.BgGradient">
+                                <MudIcon Icon="@currentStat.Icon" />
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" 
+                                           Size="Size.Small" 
+                                           Class="stat-menu" />
+                        </div>
+                        
+                        <div class="stat-body">
+                            <MudText Typo="Typo.caption" Class="stat-label">@currentStat.Label</MudText>
+                            <MudText Typo="Typo.h4" Class="stat-value">@currentStat.Value</MudText>
+                            
+                            <div class="stat-footer">
+                                <div class="trend-indicator @(currentStat.Trend >= 0 ? "positive" : "negative")">
+                                    <MudIcon Icon="@(currentStat.Trend >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)" 
+                                             Size="Size.Small" />
+                                    <span>@Math.Abs(currentStat.Trend)%</span>
+                                </div>
+                                <MudText Typo="Typo.caption" Class="trend-text">vs last month</MudText>
+                            </div>
+                        </div>
 
-            <MudItem xs="12" sm="6" md="3">
-                <div class="glass-card stat-item-wrapper" @onclick='() => NavigateTo(currentStat.Path)'>
-                    <div class="d-flex align-center">
-                        <div class="icon-box" style="background: @currentStat.BgColor">
-                            <MudIcon Icon="@currentStat.Icon" Style="@($"color: {currentStat.HexColor};")" />
-                        </div>
-                        <div class="ml-4">
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary uppercase-tracking">@currentStat.Label</MudText>
-                            <MudText Typo="Typo.h5" Class="font-weight-bold">@currentStat.Value</MudText>
+                        <div class="stat-sparkline">
+                            <div class="mini-chart" style="background: @currentStat.SparklineGradient"></div>
                         </div>
                     </div>
-                    <div class="mt-4 d-flex align-center">
-                        <span class="trend-badge @(currentStat.Trend >= 0 ? "up" : "down")">
-                            <MudIcon Icon="@(currentStat.Trend >= 0 ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)" Size="Size.Small" />
-                            @Math.Abs(currentStat.Trend)%
-                        </span>
-                        <MudText Typo="Typo.caption" Class="ml-2 mud-text-secondary">since last week</MudText>
-                    </div>
-                </div>
+                </MudPaper>
             </MudItem>
         }
+    </MudGrid>
 
-        <!-- Main Analytics Chart -->
+    <!-- Main Charts Section -->
+    <MudGrid Spacing="4" Class="mb-6">
+        <!-- Performance Analytics -->
         <MudItem xs="12" lg="8">
-            <MudPaper Elevation="0" Class="glass-card pa-6">
-                <div class="d-flex justify-space-between align-center mb-8">
-                    <MudText Typo="Typo.h6" Class="font-weight-bold">Performance Analytics</MudText>
-                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Style="border-radius: 8px;">
-                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(7))">7D</MudButton>
-                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(30))">30D</MudButton>
-                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(90))">90D</MudButton>
+            <MudPaper Elevation="0" Class="chart-card">
+                <div class="card-header">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="card-title">Performance Analytics</MudText>
+                        <MudText Typo="Typo.caption" Class="card-subtitle">Revenue trends over time</MudText>
+                    </div>
+                    <MudButtonGroup Color="Color.Primary" 
+                                    Variant="Variant.Outlined" 
+                                    Size="Size.Small" 
+                                    Class="time-selector">
+                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(7))" 
+                                   Class="@(_selectedPeriod == 7 ? "selected" : "")">
+                            7D
+                        </MudButton>
+                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(30))"
+                                   Class="@(_selectedPeriod == 30 ? "selected" : "")">
+                            30D
+                        </MudButton>
+                        <MudButton OnClick="@(() => OnRevenuePeriodChanged(90))"
+                                   Class="@(_selectedPeriod == 90 ? "selected" : "")">
+                            90D
+                        </MudButton>
                     </MudButtonGroup>
                 </div>
-                <MudChart ChartType="ChartType.Line" ChartSeries="@_series" XAxisLabels="@_revenueLabels" 
-                          Width="100%" Height="320px" ChartOptions="_lineOptions" />
+                
+                <div class="chart-container">
+                    <MudChart ChartType="ChartType.Line" 
+                              ChartSeries="@_series" 
+                              XAxisLabels="@_revenueLabels" 
+                              Width="100%" 
+                              Height="350px" 
+                              ChartOptions="_lineOptions" />
+                </div>
             </MudPaper>
         </MudItem>
 
-        <!-- Distribution Donut -->
+        <!-- Infrastructure Distribution -->
         <MudItem xs="12" lg="4">
-            <MudPaper Elevation="0" Class="glass-card pa-6">
-                <MudText Typo="Typo.h6" Class="font-weight-bold mb-8">Infrastructure</MudText>
-                <MudChart ChartType="ChartType.Donut" InputData="@_serverDistribution" 
-                          InputLabels="@_serverDistributionLabels" Width="100%" Height="280px" />
-                <div class="mt-4">
+            <MudPaper Elevation="0" Class="chart-card">
+                <div class="card-header">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="card-title">Infrastructure</MudText>
+                        <MudText Typo="Typo.caption" Class="card-subtitle">Resource distribution</MudText>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <MudChart ChartType="ChartType.Donut" 
+                              InputData="@_serverDistribution" 
+                              InputLabels="@_serverDistributionLabels" 
+                              Width="100%" 
+                              Height="280px" />
+                </div>
+
+                <div class="distribution-legend">
                     @for (int i = 0; i < _serverDistributionLabels.Length; i++)
                     {
-                        var index = i; // Fix for potential index issues in loops
-                        <div class="d-flex justify-space-between mb-1">
-                            <MudText Typo="Typo.caption">@_serverDistributionLabels[index]</MudText>
-                            <MudText Typo="Typo.caption" Class="font-weight-bold">@_serverDistribution[index]%</MudText>
+                        var index = i;
+                        var colors = new[] { "#667eea", "#10b981", "#f59e0b", "#ef4444" };
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: @colors[index]"></div>
+                            <MudText Typo="Typo.body2" Class="legend-label">@_serverDistributionLabels[index]</MudText>
+                            <MudText Typo="Typo.body2" Class="legend-value">@_serverDistribution[index]%</MudText>
                         </div>
                     }
                 </div>
             </MudPaper>
         </MudItem>
+    </MudGrid>
 
+    <!-- Recent Transactions & Activity -->
+    <MudGrid Spacing="4">
         <!-- Transactions Table -->
-        <MudItem xs="12">
-            <MudPaper Elevation="0" Class="glass-card pa-4">
-                <MudTable Items="@_recentTransactions" Hover="true" Elevation="0" Class="modern-table">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6" Class="font-weight-bold">Financial History</MudText>
-                        <MudSpacer />
-                        <MudTextField @bind-Value="_searchString" Placeholder="Search..." Adornment="Adornment.Start" 
-                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Margin="Margin.Dense" Variant="Variant.Outlined" />
-                    </ToolBarContent>
+        <MudItem xs="12" lg="8">
+            <MudPaper Elevation="0" Class="table-card">
+                <div class="card-header mb-4">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="card-title">Recent Transactions</MudText>
+                        <MudText Typo="Typo.caption" Class="card-subtitle">Latest financial activity</MudText>
+                    </div>
+                    <MudTextField @bind-Value="_searchString" 
+                                  Placeholder="Search transactions..." 
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Class="table-search" />
+                </div>
+
+                <MudTable Items="@_recentTransactions" 
+                          Hover="true" 
+                          Elevation="0"
+                          Class="modern-table"
+                          Dense="true">
                     <HeaderContent>
                         <MudTh>Entity</MudTh>
-                        <MudTh>Value</MudTh>
+                        <MudTh>Amount</MudTh>
                         <MudTh>Status</MudTh>
                         <MudTh>Date</MudTh>
-                        <MudTh></MudTh>
+                        <MudTh Style="width: 80px;"></MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>
-                            <div class="d-flex align-center">
-                                <MudAvatar Color="Color.Transparent" Style="border: 1px solid #eee" Size="Size.Small" Class="mr-3">@context.Customer[0]</MudAvatar>
-                                <MudText Typo="Typo.body2" Class="font-weight-bold">@context.Customer</MudText>
+                            <div class="entity-cell">
+                                <MudAvatar Size="Size.Small" Class="entity-avatar" Color="Color.Primary">
+                                    @context.Customer[0]
+                                </MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="entity-name">@context.Customer</MudText>
+                                    <MudText Typo="Typo.caption" Class="entity-id">ID: @context.Id</MudText>
+                                </div>
                             </div>
                         </MudTd>
                         <MudTd>
-                            <MudText Typo="Typo.body2" Class="font-weight-bold">@context.Amount.ToString("C0")</MudText>
+                            <MudText Typo="Typo.body2" Class="amount-value">
+                                @context.Amount.ToString("C0")
+                            </MudText>
                         </MudTd>
                         <MudTd>
-                            <div class="status-pill @context.Status.ToLower()">@context.Status</div>
+                            <MudChip T="string" Size="Size.Small" 
+                                     Variant="Variant.Filled"
+                                     Class="@GetStatusClass(context.Status)">
+                                @context.Status
+                            </MudChip>
                         </MudTd>
-                        <MudTd>@context.Date.ToString("MMM dd, yyyy")</MudTd>
                         <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">@context.Date.ToString("MMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">@context.Date.ToString("HH:mm")</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" 
+                                           Size="Size.Small" 
+                                           Class="row-action" />
                         </MudTd>
                     </RowTemplate>
                 </MudTable>
             </MudPaper>
         </MudItem>
+
+        <!-- Activity Feed -->
+        <MudItem xs="12" lg="4">
+            <MudPaper Elevation="0" Class="activity-card">
+                <div class="card-header mb-4">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="card-title">Recent Activity</MudText>
+                        <MudText Typo="Typo.caption" Class="card-subtitle">System events</MudText>
+                    </div>
+                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
+                </div>
+
+                <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" 
+                             TimelinePosition="TimelinePosition.Start"
+                             Class="activity-timeline">
+                    <MudTimelineItem Size="Size.Small" Color="Color.Success">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.caption" Class="time-ago">2m ago</MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudText Typo="Typo.body2" Class="font-weight-bold">New invoice created</MudText>
+                            <MudText Typo="Typo.caption">Invoice #INV-2024-001</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    
+                    <MudTimelineItem Size="Size.Small" Color="Color.Info">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.caption" Class="time-ago">15m ago</MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudText Typo="Typo.body2" Class="font-weight-bold">User login detected</MudText>
+                            <MudText Typo="Typo.caption">John Doe from 192.168.1.1</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    
+                    <MudTimelineItem Size="Size.Small" Color="Color.Warning">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.caption" Class="time-ago">1h ago</MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudText Typo="Typo.body2" Class="font-weight-bold">Server maintenance</MudText>
+                            <MudText Typo="Typo.caption">Scheduled update completed</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+
+                    <MudTimelineItem Size="Size.Small" Color="Color.Primary">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.caption" Class="time-ago">3h ago</MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudText Typo="Typo.body2" Class="font-weight-bold">Backup completed</MudText>
+                            <MudText Typo="Typo.caption">Database backup successful</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                </MudTimeline>
+            </MudPaper>
+        </MudItem>
     </MudGrid>
-</MudContainer>
+
+</div>
 
 <style>
-    :root {
-        --bg-color: #f8fafc;
-        --card-bg: rgba(255, 255, 255, 0.9);
+    .dashboard-container {
+        max-width: 1600px;
+        margin: 0 auto;
     }
-    body { background-color: var(--bg-color); }
-    .dashboard-title { letter-spacing: -1px; color: #1e293b; }
-    .glass-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.7);
+
+    /* Dashboard Header */
+    .dashboard-header {
+        margin-bottom: 32px;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .page-title {
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: -1px;
+        margin-bottom: 8px;
+    }
+
+    .breadcrumb-link {
+        color: #64748b;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb-link:hover {
+        color: #6366f1;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .action-btn {
+        border-radius: 12px;
+        text-transform: none;
+        font-weight: 600;
+        padding: 10px 24px;
+    }
+
+    .action-btn-primary {
+        border-radius: 12px;
+        text-transform: none;
+        font-weight: 600;
+        padding: 10px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+    }
+
+    .action-btn-primary:hover {
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border: 1px solid #e2e8f0;
         border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        padding: 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-    .stat-item-wrapper { padding: 24px; cursor: pointer; transition: all 0.3s ease; }
-    .stat-item-wrapper:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
-    .icon-box { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-    .uppercase-tracking { text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-size: 0.65rem; }
-    .trend-badge { display: flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
-    .trend-badge.up { background: #dcfce7; color: #166534; }
-    .trend-badge.down { background: #fee2e2; color: #991b1b; }
-    .status-pill { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-    .status-pill.completed { background: #e0f2fe; color: #0369a1; }
-    .status-pill.pending { background: #fef3c7; color: #92400e; }
-    .fade-in { animation: fadeIn 0.6s ease-in; }
-    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+    }
+
+    .stat-card-inner {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon .mud-icon-root {
+        color: white;
+        font-size: 1.75rem;
+    }
+
+    .stat-menu {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .stat-card:hover .stat-menu {
+        opacity: 1;
+    }
+
+    .stat-body {
+        margin-bottom: 16px;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.7rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .stat-value {
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: -1px;
+        margin-bottom: 12px;
+    }
+
+    .stat-footer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .trend-indicator {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .trend-indicator.positive {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .trend-indicator.negative {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .trend-text {
+        color: #94a3b8;
+    }
+
+    .stat-sparkline {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        opacity: 0.15;
+    }
+
+    .mini-chart {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Chart Cards */
+    .chart-card, .table-card, .activity-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 28px;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+    }
+
+    .card-title {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+        color: #64748b;
+    }
+
+    .time-selector {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .time-selector .mud-button-root {
+        border-radius: 0;
+        text-transform: none;
+        font-weight: 600;
+        min-width: 60px;
+    }
+
+    .time-selector .selected {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .chart-container {
+        margin: 0 -12px;
+    }
+
+    /* Distribution Legend */
+    .distribution-legend {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .legend-label {
+        flex: 1;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .legend-value {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    /* Modern Table */
+    .table-search {
+        width: 300px;
+    }
+
+    .table-search .mud-input-root {
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .modern-table {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .modern-table .mud-table-head {
+        background: #f8fafc;
+    }
+
+    .modern-table .mud-table-head .mud-table-cell {
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .modern-table .mud-table-row:hover {
+        background: #f8fafc;
+    }
+
+    .entity-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .entity-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-weight: 700;
+    }
+
+    .entity-name {
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .entity-id {
+        color: #94a3b8;
+        line-height: 1.2;
+    }
+
+    .amount-value {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+
+    .status-completed {
+        background: #dcfce7 !important;
+        color: #166534 !important;
+        font-weight: 700;
+    }
+
+    .status-pending {
+        background: #fef3c7 !important;
+        color: #92400e !important;
+        font-weight: 700;
+    }
+
+    .status-failed {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        font-weight: 700;
+    }
+
+    .row-action {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .modern-table .mud-table-row:hover .row-action {
+        opacity: 1;
+    }
+
+    /* Activity Timeline */
+    .activity-timeline {
+        margin-left: -8px;
+    }
+
+    .time-ago {
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    /* Animations */
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 960px) {
+        .header-content {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .action-btn, .action-btn-primary {
+            flex: 1;
+        }
+
+        .table-search {
+            width: 100%;
+        }
+    }
 </style>
 
 @code {
@@ -158,23 +678,50 @@
     private UserStats _userStats = new();
     private SecurityStats _securityStats = new();
     private string _searchString = "";
+    private int _selectedPeriod = 30;
     
     private List<ChartSeries> _series = new();
     private string[] _revenueLabels = Array.Empty<string>();
-    private ChartOptions _lineOptions = new() { InterpolationOption = InterpolationOption.NaturalSpline };
+    private ChartOptions _lineOptions = new() 
+    { 
+        InterpolationOption = InterpolationOption.NaturalSpline,
+        YAxisTicks = 5
+    };
     private double[] _serverDistribution = { 40, 30, 20, 10 };
-    private string[] _serverDistributionLabels = { "Web", "DB", "Storage", "Edge" };
+    private string[] _serverDistributionLabels = { "Web Servers", "Database", "Storage", "Edge CDN" };
     
     private List<Transaction> _recentTransactions = new();
     private bool _autoRefresh = true;
     private System.Timers.Timer? _refreshTimer;
 
+    private List<BreadcrumbItem> _breadcrumbs = new()
+    {
+        new BreadcrumbItem("Home", href: "/"),
+        new BreadcrumbItem("Dashboard", href: "/dashboard", disabled: true)
+    };
+
     private List<StatConfigModern> GetStatsConfigs() => new()
     {
-        new("Inventory", _serverStats.Total.ToString(), 14, Icons.Material.Filled.Storage, "#eef2ff", "#6366f1", "/servers"),
-        new("Revenue", $"${_billingStats.Revenue:N0}", 8, Icons.Material.Filled.AutoGraph, "#ecfdf5", "#10b981", "/billing"),
-        new("Active", _userStats.Active.ToString(), -3, Icons.Material.Filled.ElectricBolt, "#fff7ed", "#f59e0b", "/users"),
-        new("Safety", $"{_securityStats.Score}%", 2, Icons.Material.Filled.VerifiedUser, "#fef2f2", "#ef4444", "/security")
+        new("Total Inventory", _serverStats.Total.ToString(), 14, 
+            Icons.Material.Filled.Inventory, 
+            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            "linear-gradient(to right, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)",
+            "/servers"),
+        new("Monthly Revenue", $"${_billingStats.Revenue:N0}", 8, 
+            Icons.Material.Filled.TrendingUp, 
+            "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            "linear-gradient(to right, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)",
+            "/billing"),
+        new("Active Users", _userStats.Active.ToString(), -3, 
+            Icons.Material.Filled.People, 
+            "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+            "linear-gradient(to right, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%)",
+            "/users"),
+        new("Security Score", $"{_securityStats.Score}%", 2, 
+            Icons.Material.Filled.Shield, 
+            "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            "linear-gradient(to right, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)",
+            "/security")
     };
 
     protected override async Task OnInitializedAsync()
@@ -197,14 +744,23 @@
     private void LoadCharts()
     {
         _revenueLabels = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul" };
-        _series = new List<ChartSeries> { new ChartSeries { Name = "Revenue", Data = new double[] { 65, 59, 80, 81, 56, 55, 40 } } };
+        _series = new List<ChartSeries> 
+        { 
+            new ChartSeries 
+            { 
+                Name = "Revenue", 
+                Data = new double[] { 65000, 59000, 80000, 81000, 56000, 95000, 124500 } 
+            } 
+        };
     }
 
     private void LoadTransactions() => _recentTransactions = new List<Transaction>
     {
-        new() { Customer = "Stripe Inc", Amount = 4500, Status = "Completed", Date = DateTime.Now.AddDays(-1) },
-        new() { Customer = "Vercel", Amount = 1200, Status = "Pending", Date = DateTime.Now.AddDays(-2) },
-        new() { Customer = "GitHub", Amount = 800, Status = "Completed", Date = DateTime.Now.AddDays(-3) }
+        new() { Id = "TXN-001", Customer = "Stripe Inc", Amount = 4500, Status = "Completed", Date = DateTime.Now.AddDays(-1) },
+        new() { Id = "TXN-002", Customer = "Vercel", Amount = 1200, Status = "Pending", Date = DateTime.Now.AddDays(-2) },
+        new() { Id = "TXN-003", Customer = "GitHub", Amount = 800, Status = "Completed", Date = DateTime.Now.AddDays(-3) },
+        new() { Id = "TXN-004", Customer = "AWS", Amount = 5600, Status = "Completed", Date = DateTime.Now.AddDays(-4) },
+        new() { Id = "TXN-005", Customer = "Digital Ocean", Amount = 950, Status = "Failed", Date = DateTime.Now.AddDays(-5) }
     };
 
     private void StartAutoRefresh()
@@ -214,8 +770,22 @@
         _refreshTimer.Start();
     }
 
-    private void OnRevenuePeriodChanged(int p) { LoadCharts(); StateHasChanged(); }
-    private void NavigateTo(string p) => Navigation.NavigateTo(p);
+    private void OnRevenuePeriodChanged(int period) 
+    { 
+        _selectedPeriod = period;
+        LoadCharts(); 
+        StateHasChanged(); 
+    }
+
+    private void NavigateTo(string path) => Navigation.NavigateTo(path);
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "Completed" => "status-completed",
+        "Pending" => "status-pending",
+        "Failed" => "status-failed",
+        _ => ""
+    };
 
     public void Dispose()
     {
@@ -223,10 +793,17 @@
         _refreshTimer?.Dispose();
     }
 
-    public record StatConfigModern(string Label, string Value, double Trend, string Icon, string BgColor, string HexColor, string Path);
+    public record StatConfigModern(string Label, string Value, double Trend, string Icon, string BgGradient, string SparklineGradient, string Path);
     private class ServerStats { public int Total { get; set; } }
     private class BillingStats { public double Revenue { get; set; } }
     private class UserStats { public int Active { get; set; } }
     private class SecurityStats { public int Score { get; set; } }
-    private class Transaction { public string Customer { get; set; } = ""; public double Amount { get; set; } public string Status { get; set; } = ""; public DateTime Date { get; set; } }
+    private class Transaction 
+    { 
+        public string Id { get; set; } = "";
+        public string Customer { get; set; } = ""; 
+        public double Amount { get; set; } 
+        public string Status { get; set; } = ""; 
+        public DateTime Date { get; set; } 
+    }
 }
