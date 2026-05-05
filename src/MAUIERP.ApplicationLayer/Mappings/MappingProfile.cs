@@ -27,6 +27,9 @@ namespace MAUIERP.ApplicationLayer.Mappings
 
             CreateMap<CreateBranchDto, Branch>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => BranchStatus.Active));
+
+            CreateMap<UpdateBranchDto, Branch>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
         }
     }
 }

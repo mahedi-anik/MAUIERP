@@ -1,0 +1,337 @@
+@using FluentValidation
+@using MAUIERP.ApplicationLayer.DTOs.MasterData
+@using MAUIERP.ApplicationLayer.Features.Branches.Commands
+@using MAUIERP.ApplicationLayer.Features.Companies.Queries
+@using MAUIERP.Domain.Enums
+@using MediatR
+@using MudBlazor
+@using MudBlazorSeverity = MudBlazor.Severity
+@inject IMediator Mediator
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(!IsEdit ? "Add Branch" : "Edit Branch")</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudCard>
+            <MudForm Model="@_model" @ref="@_form">
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudAutocomplete T="CompanyDto"
+                                             @bind-Value="_selectedCompany"
+                                             SearchFunc="@SearchCompanies"
+                                             Label="Company"
+                                             Required="true"
+                                             RequiredError="Company is required"
+                                             ToStringFunc="@(c => c?.Name ?? string.Empty)"
+                                             Clearable="false"
+                                             OnValueChanged="@OnCompanyChanged">
+                            </MudAutocomplete>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudCheckBox @bind-Value="_model.IsHeadOffice" Label="Head Office" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Name"
+                                          For="@(() => _model.Name)"
+                                          Immediate="true"
+                                          Label="Name"
+                                          Required="true"
+                                          RequiredError="Name is required" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Code"
+                                          For="@(() => _model.Code)"
+                                          Immediate="true"
+                                          Label="Code"
+                                          Required="true"
+                                          RequiredError="Code is required" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Email"
+                                          For="@(() => _model.Email)"
+                                          Immediate="true"
+                                          Label="Email" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_model.Phone"
+                                          For="@(() => _model.Phone)"
+                                          Immediate="true"
+                                          Label="Phone" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_model.Address"
+                                          For="@(() => _model.Address)"
+                                          Immediate="true"
+                                          Label="Address" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.City"
+                                          For="@(() => _model.City)"
+                                          Immediate="true"
+                                          Label="City" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.State"
+                                          For="@(() => _model.State)"
+                                          Immediate="true"
+                                          Label="State/Province" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.Country"
+                                          For="@(() => _model.Country)"
+                                          Immediate="true"
+                                          Label="Country" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_model.PostalCode"
+                                          For="@(() => _model.PostalCode)"
+                                          Immediate="true"
+                                          Label="Postal Code" />
+                        </MudItem>
+
+                        @if (IsEdit)
+                        {
+                            <MudItem xs="12" sm="8">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Status</MudText>
+                                <MudRadioGroup @bind-Value="_selectedStatus"
+                                               Color="Color.Primary"
+                                               Class="d-flex flex-row gap-6">
+                                    <MudRadio Value="BranchStatus.Active">
+                                        <div class="d-flex flex-column">
+                                            <span class="font-weight-bold">Active</span>
+                                            <span class="text-caption text-muted">Branch is operational</span>
+                                        </div>
+                                    </MudRadio>
+                                    <MudRadio Value="BranchStatus.Inactive">
+                                        <div class="d-flex flex-column">
+                                            <span class="font-weight-bold">Inactive</span>
+                                            <span class="text-caption text-muted">Branch is temporarily closed</span>
+                                        </div>
+                                    </MudRadio>
+                                </MudRadioGroup>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudCardContent>
+            </MudForm>
+        </MudCard>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@(_isSaving || _selectedCompany == null)">
+            @if (_isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            <span>Save</span>
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+    [Parameter] public BranchDto? Branch { get; set; }
+    [Parameter] public bool IsEdit { get; set; }
+
+    private MudForm? _form;
+    private CreateBranchDto _model = new();
+    private bool _isSaving;
+    private CompanyDto? _selectedCompany;
+    private BranchStatus _selectedStatus = BranchStatus.Active;
+    private List<CompanyDto> _companies = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCompanies();
+
+        if (IsEdit && Branch != null)
+        {
+            _model = new CreateBranchDto
+            {
+                CompanyId = Branch.CompanyId,
+                Name = Branch.Name,
+                Code = Branch.Code,
+                Phone = Branch.Phone ?? string.Empty,
+                Email = Branch.Email ?? string.Empty,
+                Address = Branch.Address ?? string.Empty,
+                City = Branch.City ?? string.Empty,
+                State = Branch.State ?? string.Empty,
+                Country = Branch.Country ?? string.Empty,
+                PostalCode = Branch.PostalCode ?? string.Empty,
+                IsHeadOffice = Branch.IsHeadOffice
+            };
+
+            _selectedCompany = _companies.FirstOrDefault(c => c.Id == Branch.CompanyId);
+            _selectedStatus = Enum.TryParse<BranchStatus>(Branch.Status, out var status) ? status : BranchStatus.Active;
+        }
+    }
+
+    private async Task LoadCompanies()
+    {
+        try
+        {
+            var query = new GetCompaniesQuery(Page: 1, PageSize: 1000);
+            var result = await Mediator.Send(query);
+
+            if (result.Succeeded && result.Data != null)
+            {
+                _companies = result.Data.Items.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load companies: {ex.Message}", MudBlazorSeverity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<CompanyDto>> SearchCompanies(string value, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return _companies;
+        
+        return await Task.FromResult(_companies.Where(c =>
+            c.Name.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+            c.Code.Contains(value, StringComparison.OrdinalIgnoreCase)).ToList());
+    }
+
+    private void OnCompanyChanged(CompanyDto? company)
+    {
+        _selectedCompany = company;
+        if (company != null)
+        {
+            _model.CompanyId = company.Id;
+            // Force validation update
+            _form?.Validate();
+        }
+        else
+        {
+            _model.CompanyId = Guid.Empty;
+            _form?.Validate();
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        // Validate before proceeding
+        if (_form != null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                Snackbar.Add("Please fix validation errors before saving", MudBlazorSeverity.Warning);
+                return;
+            }
+        }
+
+        if (_selectedCompany == null)
+        {
+            Snackbar.Add("Please select a company", MudBlazorSeverity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_model.Name))
+        {
+            Snackbar.Add("Branch name is required", MudBlazorSeverity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_model.Code))
+        {
+            Snackbar.Add("Branch code is required", MudBlazorSeverity.Warning);
+            return;
+        }
+
+        // Double check CompanyId is set
+        if (_model.CompanyId == Guid.Empty)
+        {
+            _model.CompanyId = _selectedCompany.Id;
+        }
+
+        _isSaving = true;
+
+        try
+        {
+            if (!IsEdit)
+            {
+                var command = new CreateBranchCommand(_model);
+                var result = await Mediator.Send(command);
+
+                if (result.Succeeded)
+                {
+                    Snackbar.Add("Branch created successfully", MudBlazorSeverity.Success);
+                    MudDialog!.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var errors = string.Join("\n", result.Errors);
+                    Snackbar.Add($"Failed to create branch: {errors}", MudBlazorSeverity.Error);
+                }
+            }
+            else
+            {
+                if (Branch == null)
+                {
+                    Snackbar.Add("Branch information is missing", MudBlazorSeverity.Error);
+                    return;
+                }
+
+                var updateDto = new UpdateBranchDto
+                {
+                    CompanyId = _model.CompanyId,
+                    Name = _model.Name,
+                    Code = _model.Code,
+                    Phone = _model.Phone ?? string.Empty,
+                    Email = _model.Email ?? string.Empty,
+                    Address = _model.Address ?? string.Empty,
+                    City = _model.City ?? string.Empty,
+                    State = _model.State ?? string.Empty,
+                    Country = _model.Country ?? string.Empty,
+                    PostalCode = _model.PostalCode ?? string.Empty,
+                    IsHeadOffice = _model.IsHeadOffice,
+                    Status = _selectedStatus
+                };
+
+                var command = new UpdateBranchCommand(Branch.Id, updateDto);
+                var result = await Mediator.Send(command);
+
+                if (result.Succeeded)
+                {
+                    Snackbar.Add("Branch updated successfully", MudBlazorSeverity.Success);
+                    MudDialog!.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var errors = string.Join("\n", result.Errors);
+                    Snackbar.Add($"Failed to update branch: {errors}", MudBlazorSeverity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", MudBlazorSeverity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog!.Cancel();
+}
