@@ -1,4 +1,5 @@
 ﻿using MAUIERP.Domain.Common;
+using MAUIERP.Domain.Entities.HR;
 using MAUIERP.Domain.Enums;
 
 namespace MAUIERP.Domain.Entities.MasterData
@@ -20,5 +21,10 @@ namespace MAUIERP.Domain.Entities.MasterData
 
         // Navigation properties
         public virtual ICollection<Branch> Branches { get; set; } = new List<Branch>();
+        public virtual ICollection<Department> Departments { get; set; } = new List<Department>();
+        public virtual ICollection<Designation> Designations { get; set; } = new List<Designation>();
+        public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        public virtual ICollection<Leave> Leaves { get; set; } = new List<Leave>();
+        public virtual ICollection<Shift> Shifts { get; set; } = new List<Shift>();
     }
 }

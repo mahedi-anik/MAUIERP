@@ -1,0 +1,222 @@
+﻿@page "/hr-dashboard"
+@using MudBlazor
+@using System.Net.Http.Json
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12 fade-in">
+    @* --- HEADER SECTION --- *@
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-8">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Class="fw-800">Human Resources Command</MudText>
+            <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Strategic workforce analytics and talent management</MudText>
+        </MudStack>
+        <MudStack Row="true" Spacing="3">
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.FileDownload" Color="Color.Primary" Class="rounded-lg">Export Report</MudButton>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="rounded-lg px-6 shadow-indigo">Add Employee</MudButton>
+        </MudStack>
+    </MudStack>
+
+    @* --- TOP KPI GRID --- *@
+    <MudGrid Spacing="4" Class="mb-8">
+        @foreach (var metric in _hrMetrics)
+        {
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Elevation="0" Class="pa-6 rounded-xl border-soft hover-lift">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4">
+                        <div class="icon-surface" style="background-color: @(metric.Color + "15"); color: @metric.Color">
+                            <MudIcon Icon="@metric.Icon" />
+                        </div>
+                        <MudChip T="string" Size="Size.Small" Color="@(metric.IsPositive ? Color.Success : Color.Error)" Variant="Variant.Text" Class="fw-700">
+                            @(metric.IsPositive ? "+" : "")@metric.Change%
+                        </MudChip>
+                    </MudStack>
+                    <MudText Typo="Typo.h4" Class="fw-800">@metric.Value</MudText>
+                    <MudText Typo="Typo.caption" Class="text-secondary fw-600 uppercase tracking-wider">@metric.Title</MudText>
+                    <div class="mt-4 sparkline-wrapper">
+                        @* Placeholder for a mini-trend line *@
+                        <div class="sparkline-bar" style="width: @(metric.Change * 5)%"></div>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+
+    @* --- MAIN ANALYTICS SECTION --- *@
+    <MudGrid Spacing="4">
+        @* Recruitment Pipeline Chart *@
+        <MudItem xs="12" lg="8">
+            <MudPaper Elevation="0" Class="pa-8 rounded-xl border-soft h-100">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-8">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.h6" Class="fw-700">Recruitment Funnel</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Candidate progression across departments</MudText>
+                    </MudStack>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
+                        <MudButton Class="px-4">Quarterly</MudButton>
+                        <MudButton Class="px-4 active-toggle">Monthly</MudButton>
+                    </MudButtonGroup>
+                </MudStack>
+                
+                <MudChart ChartType="ChartType.Bar" 
+                          ChartSeries="@_pipelineSeries" 
+                          XAxisLabels="@_pipelineLabels" 
+                          Width="100%" 
+                          Height="350px" 
+                          ChartOptions="@_barChartOptions" />
+            </MudPaper>
+        </MudItem>
+
+        @* Department Distribution *@
+        <MudItem xs="12" lg="4">
+            <MudPaper Elevation="0" Class="pa-8 rounded-xl border-soft h-100">
+                <MudText Typo="Typo.h6" Class="fw-700 mb-6">Headcount by Dept</MudText>
+                <MudChart ChartType="ChartType.Donut" 
+                          InputData="@_deptData" 
+                          InputLabels="@_deptLabels" 
+                          Width="100%" 
+                          Height="280px" />
+                
+                <div class="mt-8">
+                    @for (int i = 0; i < _deptLabels.Length; i++)
+                    {
+                        var index = i;
+                        <div class="d-flex align-center justify-between py-3 border-bottom-dashed">
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <div class="dot" style="background-color: @(_chartColors[index])"></div>
+                                <MudText Typo="Typo.body2" Class="fw-600">@_deptLabels[index]</MudText>
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="fw-700">@_deptData[index]%</MudText>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @* --- EMPLOYEE TABLE SECTION --- *@
+        <MudItem xs="12">
+            <MudPaper Elevation="0" Class="pa-0 rounded-xl border-soft overflow-hidden">
+                <div class="pa-6 d-flex justify-between align-center">
+                    <MudText Typo="Typo.h6" Class="fw-700">Recent Onboarding</MudText>
+                    <MudTextField @bind-Value="_searchString" 
+                                  Placeholder="Search employees..." 
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" 
+                                  Class="search-field" />
+                </div>
+                
+                <MudTable Items="@_employees" Hover="true" Elevation="0" Class="modern-table">
+                    <HeaderContent>
+                        <MudTh>Employee</MudTh>
+                        <MudTh>Role</MudTh>
+                        <MudTh>Department</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Performance</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled">@context.Name[0]</MudAvatar>
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.body2" Class="fw-700">@context.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Email</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd>@context.Role</MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Surface" Class="fw-600">@context.Dept</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <div class="status-pill @context.Status.ToLower()">@context.Status</div>
+                        </MudTd>
+                        <MudTd>
+                            <MudProgressLinear Color="@GetProgressColor(context.Performance)" Value="@context.Performance" Class="rounded-pill" />
+                        </MudTd>
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" />
+                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    /* UI Fundamentals */
+    .fw-800 { font-weight: 800; }
+    .fw-700 { font-weight: 700; }
+    .fw-600 { font-weight: 600; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
+
+    /* Custom Elements */
+    .border-soft { border: 1px solid #e2e8f0; }
+    .icon-surface { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .shadow-indigo { box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3); }
+    .search-field { max-width: 300px; background-color: #f8fafc; }
+
+    /* Interaction States */
+    .hover-lift { transition: all 0.2s ease-in-out; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.05); border-color: #6366f1; }
+
+    /* Status Pills */
+    .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+    .active { background-color: #dcfce7; color: #166534; }
+    .onboarding { background-color: #dbeafe; color: #1e40af; }
+    .remote { background-color: #f3e8ff; color: #6b21a8; }
+
+    /* Layout Visuals */
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .border-bottom-dashed { border-bottom: 1px dashed #e2e8f0; }
+    .active-toggle { background-color: #6366f1 !important; color: white !important; }
+
+    .fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    private string _searchString = "";
+    
+    // Charts Data
+    private List<ChartSeries> _pipelineSeries = new() {
+        new ChartSeries { Name = "Applied", Data = new double[] { 140, 120, 180, 90, 60, 110 } },
+        new ChartSeries { Name = "Interviewed", Data = new double[] { 40, 35, 55, 20, 15, 30 } },
+        new ChartSeries { Name = "Hired", Data = new double[] { 12, 8, 14, 5, 4, 10 } }
+    };
+    private string[] _pipelineLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun" };
+    private ChartOptions _barChartOptions = new() { InterpolationOption = InterpolationOption.NaturalSpline };
+    
+    private double[] _deptData = { 45, 25, 20, 10 };
+    private string[] _deptLabels = { "Engineering", "Sales", "Support", "Marketing" };
+    private string[] _chartColors = { "#6366f1", "#10b981", "#f59e0b", "#ef4444" };
+
+    // Metric Models
+    private List<HRMetric> _hrMetrics = new() {
+        new("Total Employees", "482", 4.2, Icons.Material.Filled.Groups, "#6366f1", true),
+        new("Retention Rate", "94.8%", 1.1, Icons.Material.Filled.Favorite, "#10b981", true),
+        new("Open Positions", "24", 8.4, Icons.Material.Filled.Work, "#f59e0b", false),
+        new("Avg Onboarding", "12 Days", 2.5, Icons.Material.Filled.Speed, "#ef4444", true)
+    };
+
+    // Employee Data Logic
+    private List<Employee> _employees = new() {
+        new("Sarah Chen", "Senior Dev", "Engineering", "Active", 92, "sarah.c@company.com"),
+        new("James Wilson", "Account Exec", "Sales", "Onboarding", 45, "j.wilson@company.com"),
+        new("Maria Garcia", "HR Lead", "HR", "Active", 88, "m.garcia@company.com"),
+        new("Alex Kim", "UX Designer", "Product", "Remote", 76, "a.kim@company.com")
+    };
+
+    private Color GetProgressColor(int value) => value switch {
+        > 80 => Color.Success,
+        > 50 => Color.Info,
+        _ => Color.Warning
+    };
+
+    public record HRMetric(string Title, string Value, double Change, string Icon, string Color, bool IsPositive);
+    public record Employee(string Name, string Role, string Dept, string Status, int Performance, string Email);
+}

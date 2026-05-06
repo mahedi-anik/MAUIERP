@@ -1,7 +1,8 @@
 ﻿using MAUIERP.ApplicationLayer.Common.Interfaces;
-using MAUIERP.Domain.Entities.Auth;
-using MAUIERP.Domain.Entities.MasterData;
 using MAUIERP.Domain.Common;
+using MAUIERP.Domain.Entities.Auth;
+using MAUIERP.Domain.Entities.HR;
+using MAUIERP.Domain.Entities.MasterData;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
@@ -21,16 +22,34 @@ namespace MAUIERP.Infrastructure.Data
         {
             _currentUserService = currentUserService;
         }
-
+        // Master Data
         public DbSet<Company> Companies => Set<Company>();
         public DbSet<Branch> Branches => Set<Branch>();
+        // Auth
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<Permission> Permissions => Set<Permission>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        //HR
+        public DbSet<Department> Departments => Set<Department>();
+        public DbSet<Designation> Designations => Set<Designation>();
+        public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
+        public DbSet<Leave> Leaves => Set<Leave>();
+        public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<Shift> Shifts => Set<Shift>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Change ALL cascade deletes to restrict (safest approach)
+            foreach (var foreignKey in modelBuilder.Model.GetEntityTypes()
+                .SelectMany(e => e.GetForeignKeys()))
+            {
+                if (foreignKey.DeleteBehavior == DeleteBehavior.Cascade)
+                {
+                    foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+                }
+            }
+
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(modelBuilder);
         }
