@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using FluentValidation;
+﻿using FluentValidation;
 using MAUIERP.ApplicationLayer.Common.Behaviours;
 using MAUIERP.ApplicationLayer.Mappings;
 using MediatR;
@@ -12,8 +11,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Configure AutoMapper manually to avoid ambiguity
-        var mapperConfig = new MapperConfiguration(cfg =>
+        // Configure AutoMapper manually (avoids vulnerable extension method)
+        var mapperConfig = new AutoMapper.MapperConfiguration(cfg =>
         {
             cfg.AddProfile<MappingProfile>();
         });
