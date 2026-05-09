@@ -1,25 +1,14 @@
-using Microsoft.Maui.Controls;
-using Serilog;
-
-namespace MAUIERP.BlazorUI;
+﻿namespace MAUIERP.BlazorUI;
 
 public partial class App : Application
 {
-    public App()
-    {
-        Log.Debug("App constructor - Initializing Component");
-        InitializeComponent();
-        Log.Debug("App constructor - Initialized successfully");
-    }
+	public App()
+	{
+		InitializeComponent();
+	}
 
-    protected override Window CreateWindow(IActivationState? activationState)
-    {
-        Log.Debug("CreateWindow called");
-        var window = new Window(new MainPage())
-        {
-            Title = "MAUI ERP System"
-        };
-        Log.Debug($"Window created: Title={window.Title}");
-        return window;
-    }
+	protected override Window CreateWindow(IActivationState? activationState)
+	{
+		return new Window(new MainPage()) { Title = "MAUIERP.BlazorUI" };
+	}
 }

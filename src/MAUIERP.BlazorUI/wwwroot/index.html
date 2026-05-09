@@ -3,13 +3,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>MAUI ERP System</title>
+    <title>MAUIERP.BlazorUI</title>
     <base href="/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
+    <link rel="stylesheet" href="MAUIERP.BlazorUI.styles.css" />
     <link rel="icon" href="data:,">
 </head>
+
 <body>
 
     <div class="status-bar-safe-area"></div>
@@ -22,14 +23,8 @@
         <a class="dismiss">🗙</a>
     </div>
 
-    <script src="_framework/blazor.webview.js"></script>
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
 
-    <script>
-        // Ensure MudBlazor is properly initialized
-        window.addEventListener('load', function () {
-            console.log('MudBlazor initialized');
-        });
-    </script>
 </body>
+
 </html>

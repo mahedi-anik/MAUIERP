@@ -1,7 +1,7 @@
 ﻿using MAUIERP.ApplicationLayer.Common.Interfaces;
-using MAUIERP.ApplicationLayer.Common.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Result = MAUIERP.ApplicationLayer.Common.Models.Result;
 
 namespace MAUIERP.ApplicationLayer.Features.Companies.Commands
 {

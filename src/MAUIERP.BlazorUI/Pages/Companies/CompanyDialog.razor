@@ -114,7 +114,7 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
     [Parameter] public CompanyDto? Company { get; set; }
     [Parameter] public bool IsEdit { get; set; }
     

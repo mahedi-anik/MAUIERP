@@ -1,9 +1,9 @@
-namespace MAUIERP.BlazorUI;
+﻿namespace MAUIERP.BlazorUI;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage()
-    {
-        InitializeComponent();
-    }
+	public MainPage()
+	{
+		InitializeComponent();
+	}
 }

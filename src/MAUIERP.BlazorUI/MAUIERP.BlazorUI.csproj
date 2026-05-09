@@ -1,20 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-windows10.0.19041.0</TargetFrameworks>
-		<OutputType>WinExe</OutputType>
+		<TargetFrameworks>net10.0-android;net10.0-windows10.0.19041.0</TargetFrameworks>
+		<OutputType>Exe</OutputType>
 		<RootNamespace>MAUIERP.BlazorUI</RootNamespace>
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<!-- Enable these to let the SDK handle file inclusion -->
-		<EnableDefaultCssItems>true</EnableDefaultCssItems>
-		<EnableDefaultMauiItems>true</EnableDefaultMauiItems>
-		<EnableDefaultXamlItems>true</EnableDefaultXamlItems>
+		<Nullable>enable</Nullable>
+
+		<ApplicationTitle>MAUI ERP</ApplicationTitle>
+		<ApplicationId>com.mauierp.app</ApplicationId>
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 
-		<WindowsPackageType>None</WindowsPackageType>
-		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<!-- Critical fix for Android - Remove implicit ASP.NET Core reference -->
+		<DisableImplicitAspNetCoreAppReference Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">true</DisableImplicitAspNetCoreAppReference>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -24,12 +28,11 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" />
 		<PackageReference Include="Blazored.LocalStorage" />
 		<PackageReference Include="MudBlazor" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" />
 		<PackageReference Include="Serilog" />
 		<PackageReference Include="Serilog.Extensions.Logging" />
 		<PackageReference Include="Serilog.Sinks.File" />
 		<PackageReference Include="Serilog.Sinks.Console" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -37,16 +40,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Do NOT manually include App.xaml or MainPage.xaml here[cite: 23] -->
 		<None Include="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="MainPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+		<MauiXaml Update="MainPage.xaml" />
 	</ItemGroup>
+
+	<ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+
+    <MauiImage Include="Resources\Images\*" />
+    <MauiFont Include="Resources\Fonts\*" />
+    <MauiAsset Include="Resources\Raw\**" />
+</ItemGroup>
 
 </Project>

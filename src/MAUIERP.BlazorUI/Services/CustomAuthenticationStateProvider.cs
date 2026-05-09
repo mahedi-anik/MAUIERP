@@ -1,5 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using MAUIERP.ApplicationLayer.Common.Interfaces; // Add this
+using MAUIERP.Infrastructure.Services; // Add this
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -8,40 +10,42 @@ namespace MAUIERP.BlazorUI.Services;
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
     private readonly ILocalStorageService _localStorage;
+    private readonly ICurrentUserService _currentUserService; // Add this
     private readonly JwtSecurityTokenHandler _tokenHandler = new();
     private ClaimsPrincipal _anonymous = new(new ClaimsIdentity());
 
-    public CustomAuthenticationStateProvider(ILocalStorageService localStorage)
+    public CustomAuthenticationStateProvider(
+        ILocalStorageService localStorage,
+        ICurrentUserService currentUserService) // Inject here
     {
         _localStorage = localStorage;
+        _currentUserService = currentUserService;
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var token = await _localStorage.GetItemAsync<string>("accessToken");
+        try
+        {
+            var token = await _localStorage.GetItemAsync<string>("accessToken");
 
-        if (string.IsNullOrEmpty(token) || !IsTokenValid(token))
-            return new AuthenticationState(_anonymous);
+            if (string.IsNullOrEmpty(token) || !IsTokenValid(token))
+            {
+                return ClearState();
+            }
 
-        var claims = ParseClaimsFromJwt(token);
-        var identity = new ClaimsIdentity(claims, "jwt");
-        var user = new ClaimsPrincipal(identity);
-
-        return new AuthenticationState(user);
+            return SetState(token);
+        }
+        catch
+        {
+            return ClearState();
+        }
     }
 
     public async Task MarkUserAsAuthenticated(string token)
     {
-        if (string.IsNullOrEmpty(token))
-            throw new ArgumentNullException(nameof(token));
-
         await _localStorage.SetItemAsync("accessToken", token);
-
-        var claims = ParseClaimsFromJwt(token);
-        var identity = new ClaimsIdentity(claims, "jwt");
-        var user = new ClaimsPrincipal(identity);
-
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+        var authState = SetState(token);
+        NotifyAuthenticationStateChanged(Task.FromResult(authState));
     }
 
     public async Task MarkUserAsLoggedOut()
@@ -50,7 +54,32 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         await _localStorage.RemoveItemAsync("refreshToken");
         await _localStorage.RemoveItemAsync("userInfo");
 
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
+        var authState = ClearState();
+        NotifyAuthenticationStateChanged(Task.FromResult(authState));
+    }
+
+    private AuthenticationState SetState(string token)
+    {
+        var claims = ParseClaimsFromJwt(token);
+        var identity = new ClaimsIdentity(claims, "jwt");
+        var user = new ClaimsPrincipal(identity);
+
+        // SYNC: Update the Infrastructure service with the logged-in user
+        if (_currentUserService is CurrentUserService service)
+        {
+            service.SetUser(user);
+        }
+
+        return new AuthenticationState(user);
+    }
+
+    private AuthenticationState ClearState()
+    {
+        if (_currentUserService is CurrentUserService service)
+        {
+            service.SetUser(_anonymous);
+        }
+        return new AuthenticationState(_anonymous);
     }
 
     private bool IsTokenValid(string token)
@@ -60,10 +89,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             var jwtToken = _tokenHandler.ReadJwtToken(token);
             return jwtToken.ValidTo > DateTime.UtcNow;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 
     private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
@@ -73,9 +99,6 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             var token = _tokenHandler.ReadJwtToken(jwt);
             return token.Claims;
         }
-        catch
-        {
-            return new List<Claim>();
-        }
+        catch { return new List<Claim>(); }
     }
 }
