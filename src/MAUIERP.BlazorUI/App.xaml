@@ -5,12 +5,13 @@
              x:Class="MAUIERP.BlazorUI.App">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- Add these missing colors -->
+            <Color x:Key="White">White</Color>
+            <Color x:Key="Black">Black</Color>
 
-        <!--
-            For information about styling .NET MAUI pages
-            please refer to the documentation:
-            https://go.microsoft.com/fwlink/?linkid=2282329
-        -->
+            <!-- You can also add other colors you might need -->
+            <Color x:Key="Primary">#512BD4</Color>
+            <Color x:Key="Secondary">#DFD8F7</Color>
 
         </ResourceDictionary>
     </Application.Resources>

@@ -1,14 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Maui;assembly=Microsoft.AspNetCore.Components.WebView.Maui"
              xmlns:local="clr-namespace:MAUIERP.BlazorUI"
-             xmlns:components="clr-namespace:MAUIERP.BlazorUI.Components"
-             x:Class="MAUIERP.BlazorUI.MainPage">
+             x:Class="MAUIERP.BlazorUI.MainPage"
+             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
 
-    <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
-        <BlazorWebView.RootComponents>
-            <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}" />
-        </BlazorWebView.RootComponents>
-    </BlazorWebView>
-
+    <blazor:BlazorWebView x:Name="blazorWebView" 
+                          HostPage="wwwroot/index.html">
+        <blazor:BlazorWebView.RootComponents>
+            <!-- Use "Main" as the root component, not "Routes" or "App" -->
+            <blazor:RootComponent Selector="#app" 
+                                  ComponentType="{x:Type local:Main}" />
+        </blazor:BlazorWebView.RootComponents>
+    </blazor:BlazorWebView>
 </ContentPage>
