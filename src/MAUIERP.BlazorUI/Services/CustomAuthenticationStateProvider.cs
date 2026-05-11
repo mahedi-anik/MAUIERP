@@ -94,11 +94,39 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
     {
+        var claims = new List<Claim>();
+
         try
         {
             var token = _tokenHandler.ReadJwtToken(jwt);
-            return token.Claims;
+
+            foreach (var claim in token.Claims)
+            {
+                switch (claim.Type)
+                {
+                    case "role":
+                        claims.Add(new Claim(ClaimTypes.Role, claim.Value));
+                        break;
+
+                    case "name":
+                        claims.Add(new Claim(ClaimTypes.Name, claim.Value));
+                        break;
+
+                    case "sub":
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, claim.Value));
+                        break;
+
+                    default:
+                        claims.Add(claim);
+                        break;
+                }
+            }
         }
-        catch { return new List<Claim>(); }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
+        return claims;
     }
 }

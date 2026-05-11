@@ -1,85 +1,86 @@
 ﻿using Blazored.LocalStorage;
-using MAUIERP.ApplicationLayer.Common.Interfaces;
+using MAUIERP.ApplicationLayer;
 using MAUIERP.BlazorUI;
 using MAUIERP.BlazorUI.Services;
-using MAUIERP.Infrastructure.Data;
-using MAUIERP.Infrastructure.Options;
-using MAUIERP.Infrastructure.Services;
-using MediatR;
+using MAUIERP.Infrastructure;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
-using System.Reflection;
 
-namespace MAUIERP
+namespace MAUIERP;
+
+public static class MauiProgram
 {
-    public static class MauiProgram
+    public static MauiApp CreateMauiApp()
     {
-        public static MauiApp CreateMauiApp()
-        {
-            var builder = MauiApp.CreateBuilder();
+        var builder = MauiApp.CreateBuilder();
 
-            builder
-                .UseMauiApp<App>()
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                });
+        #region MAUI
 
-            builder.Services.AddMauiBlazorWebView();
-
-            // Add authentication services
-            builder.Services.AddAuthorizationCore();
-            builder.Services.AddCascadingAuthenticationState();
-
-            // Register CustomAuthenticationStateProvider
-            builder.Services.AddScoped<CustomAuthenticationStateProvider>();
-            builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
-                sp.GetRequiredService<CustomAuthenticationStateProvider>());
-
-            // Add Blazored LocalStorage
-            builder.Services.AddBlazoredLocalStorage();
-
-            // Register MediatR - CRITICAL for Login page
-            builder.Services.AddMediatR(cfg => {
-                // Register from Application Layer (where LoginCommand is)
-                cfg.RegisterServicesFromAssembly(typeof(MAUIERP.ApplicationLayer.Features.Auth.Commands.LoginCommand).Assembly);
+        builder
+            .UseMauiApp<App>()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             });
 
-            // Register Database Context
-            var connectionString = "Server=DESKTOP-NF2UF0M\\SQLEXPRESS01;Database=MAUIERPDB;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
-            builder.Services.AddDbContext<IApplicationDbContext, ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
+        #endregion
 
-            // Register Application Layer Services
-            builder.Services.AddScoped<IApplicationDbContext>(sp =>
-                sp.GetRequiredService<ApplicationDbContext>());
-            builder.Services.AddScoped<IJwtService, JwtService>();
-            builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-            builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+        #region Configuration
 
-            // Add configuration
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
 
-            builder.Configuration.AddConfiguration(configuration);
+        builder.Configuration.AddConfiguration(configuration);
 
-            // Configure JWT settings from appsettings.json
-            builder.Services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-            builder.Services.AddSingleton<JwtSettings>(sp =>
-                configuration.GetSection("JwtSettings").Get<JwtSettings>());
+        #endregion
+
+        #region Blazor Hybrid
+
+        builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
-            builder.Services.AddBlazorWebViewDeveloperTools();
-            builder.Logging.AddDebug();
+        builder.Services.AddBlazorWebViewDeveloperTools();
+        builder.Logging.AddDebug();
 #endif
 
-            builder.Services.AddMudServices();
+        #endregion
 
-            return builder.Build();
-        }
+        #region Application + Infrastructure
+
+        builder.Services.AddApplication();
+
+        builder.Services.AddInfrastructure(configuration);
+
+        #endregion
+
+        #region Authentication
+
+        builder.Services.AddAuthorizationCore();
+
+        // DO NOT use AddCascadingAuthenticationState()
+
+        builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+
+        builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
+            sp.GetRequiredService<CustomAuthenticationStateProvider>());
+
+        #endregion
+
+        #region Local Storage
+
+        builder.Services.AddBlazoredLocalStorage();
+
+        #endregion
+
+        #region UI Services
+
+        builder.Services.AddMudServices();
+
+        #endregion
+
+        return builder.Build();
     }
 }
