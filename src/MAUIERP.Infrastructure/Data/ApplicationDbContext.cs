@@ -52,6 +52,12 @@ namespace MAUIERP.Infrastructure.Data
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             base.OnModelCreating(modelBuilder);
+            // Soft Delete Filter
+            modelBuilder.Entity<BaseEntity>().HasQueryFilter(e => !e.IsDeleted);
+
+            // Multi-Tenancy (Company + Branch)
+            modelBuilder.Entity<Company>().HasQueryFilter(c => !c.IsDeleted);
+            modelBuilder.Entity<Branch>().HasQueryFilter(b => !b.IsDeleted);
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

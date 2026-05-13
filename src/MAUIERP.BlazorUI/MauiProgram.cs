@@ -70,7 +70,7 @@ public static class MauiProgram
         // Rest of your services
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddApplication();
-        builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddAuthorizationCore();
         builder.Services.AddScoped<CustomAuthenticationStateProvider>();
         builder.Services.AddScoped<AuthenticationStateProvider>(sp =>

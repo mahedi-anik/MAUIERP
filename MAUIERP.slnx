@@ -6,6 +6,7 @@
     </Project>
     <Project Path="src/MAUIERP.Domain/MAUIERP.Domain.csproj" />
     <Project Path="src/MAUIERP.Infrastructure/MAUIERP.Infrastructure.csproj" />
+    <Project Path="src/MAUIERP.WebApi/MAUIERP.WebApi.csproj" Id="13e53d9c-a658-440a-929c-e1f54c865a52" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MAUIERP.IntegrationTests/MAUIERP.IntegrationTests.csproj" />

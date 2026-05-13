@@ -1,0 +1,6 @@
+@MAUIERP.WebApi_HostAddress = http://localhost:5115
+
+GET {{MAUIERP.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
